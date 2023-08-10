@@ -33,7 +33,7 @@
 }
 
 .App-name{
-  width: 40%; /* Distribuye los divs en grupos de 5 (20% width cada uno) con 20px de espacio entre ellos */
+  width: 22%;
   margin: 10px; /* Espacio entre los divs */
   background-color: #f0f0f0;
   text-align: center;
@@ -74,6 +74,15 @@
   float: left;
 }
 
+.App-label{
+  margin-right: 20px;
+}
+
+#cbSeries{
+  min-width: 150px;
+}
+
+
 @media only screen and (max-width: 600px) {
   .preview-img{
     width: 100%;
@@ -82,5 +91,13 @@
 
   .image-card {
     width:100%;
+  }
+
+  -App-name{
+    width: 24%;
+  }
+
+  #cbSeries{
+    max-width: 224px;
   }
 }
