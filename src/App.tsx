@@ -86,6 +86,8 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedValue])
 
+
+
   const fetchApi = async () => {
 
 
@@ -125,20 +127,24 @@ function App() {
   const viewCard = (cardIndex: any) => {
 
 
-    if (textSearch !== '' && cardIndex < filterCards.length && cardIndex >= 0) {
+    if (cardIndex < filterCards.length && cardIndex >= 0) {
       filterCards[cardIndex].index = cardIndex
       setCurrentCard(filterCards[cardIndex])
     }
 
-    if (textSearch === '' && cardIndex >= 0) {
-      cards[cardIndex].index = cardIndex
-      setCurrentCard(cards[cardIndex])
+    if(textSearch === '' &&  cardIndex >= filterCards.length){
+      setPagePosition(pagePosition + 1)
     }
+
+    // if (textSearch === '' && cardIndex >= 0) {
+    //   cards[cardIndex].index = cardIndex
+    //   setCurrentCard(cards[cardIndex])
+    // }
   }
 
   const handlerErrorImagen = (event: any) => {
 
-    if (event.target.className) {
+    if (event.target.className === 'preview-img') {
       if (event.target.src.toLowerCase().includes('low.webp')) {
         event.target.src = event.target.src.replace('low.webp', 'high.webp')
       }
