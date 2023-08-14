@@ -85,7 +85,7 @@ export async function readBDCards() {
   export async function removeCardInDb(card_id:string) {
     const DB_KEY = process.env.REACT_APP_DB_AP_KEY || ""
     const DB_URL = process.env.REACT_APP_DB_AP_URL || ""
-  
+      
     const supabase = createClient(DB_URL, DB_KEY)
     const resultTot = await supabase.from('Cards').delete().eq('card_id', card_id)
   
