@@ -47,18 +47,19 @@
 }
 
 .App-return{
-  margin-bottom: 20px;
+  margin-bottom: 5px;
   cursor: pointer;
 }
 
 .App-search{
-  margin: 50px;
+  margin: 30px 50px 50px 50px;
   width: 50%;
   height: 50px;
 }
 
 .App-Pokemon-title{
   color: #070000;
+  word-break: break-all
 }
 
 .preview-img{
@@ -67,7 +68,7 @@
 }
 
 .App-pagination{
-  width: 50%;
+  width: 100%;
   margin-top: 20px;
   margin-bottom: 20px;
   cursor: pointer;
@@ -81,6 +82,34 @@
 #cbSeries{
   min-width: 150px;
 }
+
+.App-check-exist-list{
+  color: #000;
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.App-check-exist{
+  margin-left: 278px;
+  margin-bottom: 10px;
+}
+
+.App-filters{
+  width: 50%;
+  text-align: left;
+}
+
+.RadioButtons{
+  margin-top: 20px;
+  width: 50%;
+  text-align: left;
+}
+
+.RadioButtonItem{
+
+  margin-right: 20px;
+}
+
 
 
 @media only screen and (max-width: 600px) {
@@ -99,5 +128,19 @@
 
   #cbSeries{
     max-width: 224px;
+  }
+
+  .App-check-exist{
+    margin-left: 237px;
+
+  }
+
+ 
+
+  .RadioButtonItem{
+   
+    display: block;
+    width: 100%;
+    min-width: 225px;
   }
 }

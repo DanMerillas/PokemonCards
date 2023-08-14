@@ -2,11 +2,13 @@
 import React, { useEffect } from 'react';
 import './App.css';
 import noImage from './images/no-image.png'
+import { ISeries } from './interfaces/Iseries';
+import { CardsFilter } from './components/CardsFilter';
+import { CardsList } from './components/CardsList';
+import { CardDetail } from './components/CardDetail';
+import { addCardInDb, getCardsFromApi, getSeriesCardsFromApi, getSeriesFromApi, readBDCards, removeCardInDb } from './services/service';
 
-interface ISeries {
-  name: string
-  id: string
-}
+
 
 
 function App() {
@@ -18,11 +20,14 @@ function App() {
   const [textSearch, setTextSearch] = React.useState<string>('')
   const [pagePosition, setPagePosition] = React.useState(1)
   const [selectedValue, setSelectedValue] = React.useState('');
+  const [cardsInDb, setCardsInDb] = React.useState<any>(undefined)
+  const [selectedRadioButtonValue, setSelectedRadioButtonValue] = React.useState('');
 
 
   const itemsPerPage = 12
 
   useEffect(() => {
+    fetchDBCards()
     fetchApi()
     fetchCombosFromApi()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -37,11 +42,27 @@ function App() {
         return
       }
 
-      const filteredCardsResults = cards.filter((card: any) => {
+      let filteredCardsResults = cards.filter((card: any) => {
         if (card.name.toLowerCase().includes(textSearch.toLowerCase())) {
           return card
         }
       })
+
+      if (selectedRadioButtonValue === 'Ihave') {
+        filteredCardsResults = filteredCardsResults.filter((card: any) => {
+          if (cardsInDb.find((cardDB: any) => cardDB.card_id === card.id)) {
+            return card
+          }
+        })
+      }
+
+      if (selectedRadioButtonValue === 'IDontHave') {
+        filteredCardsResults = filteredCardsResults.filter((card: any) => {
+          if (!cardsInDb.find((cardDB: any) => cardDB.card_id === card.id)) {
+            return card
+          }
+        })
+      }
 
       let cardsPaged = filteredCardsResults.splice(0, itemsPerPage * pagePosition)
 
@@ -52,7 +73,7 @@ function App() {
     filterCardsSearch()
 
 
-  }, [cards, pagePosition, textSearch])
+  }, [cards, pagePosition, textSearch, selectedRadioButtonValue, cardsInDb])
 
   useEffect(() => {
     if (selectedValue !== '') {
@@ -61,27 +82,14 @@ function App() {
     else {
       fetchApi()
     }
-    
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedValue])
 
   const fetchApi = async () => {
-    const result = await fetch('https://api.tcgdex.net/v2/es/cards')
-    const data = await result.json()
 
-    const cardsWithImage = data.filter((card: any) => {
-      if (card.image) {
-        return card
-      }
-    }
-    ).sort((a: any, b: any) => {
-      if (a.name > b.name) {
-        return 1
-      }
-      if (a.name < b.name) {
-        return -1
-      }
-    })
+
+    const cardsWithImage = await getCardsFromApi()
 
     setCards(cardsWithImage)
     //console.log(cardsWithImage.splice(0, 10))
@@ -91,24 +99,8 @@ function App() {
   }
 
   const fetchSeriesApi = async () => {
-    const result = await fetch(`https://api.tcgdex.net/v2/es/sets/${selectedValue}`)
-    const data = await result.json()
 
-    const seriesCards = data.cards
-
-    const cardsWithImage = seriesCards.filter((card: any) => {
-      if (card.image) {
-        return card
-      }
-    }
-    ).sort((a: any, b: any) => {
-      if (a.name > b.name) {
-        return 1
-      }
-      if (a.name < b.name) {
-        return -1
-      }
-    })
+    const cardsWithImage = await getSeriesCardsFromApi(selectedValue)
 
     setCards(cardsWithImage)
     const cardsWithImageFiltered = cardsWithImage.splice(0, itemsPerPage * pagePosition)
@@ -116,20 +108,18 @@ function App() {
   }
 
   const fetchCombosFromApi = async () => {
-    const resultSeries = await fetch('https://api.tcgdex.net/v2/es/sets')
-    const dataSeries = await resultSeries.json()
-    const seriesSorted = dataSeries.sort((a: any, b: any) => {
-      if (a.name > b.name) {
-        return 1
-      }
-      if (a.name < b.name) {
-        return -1
-      }
-    })
+
+    const seriesSorted = await getSeriesFromApi()
     setSeries(seriesSorted)
-    
+
   }
 
+  const fetchDBCards = async () => {
+
+    const dbCards = await readBDCards()
+
+    setCardsInDb(dbCards)
+  }
 
 
   const viewCard = (cardIndex: any) => {
@@ -148,19 +138,44 @@ function App() {
 
   const handlerErrorImagen = (event: any) => {
 
-    if (event.target.src.toLowerCase().includes('high.webp')) {
-      event.target.src = event.target.src.replace('high.webp', 'low.webp')
+    if (event.target.className) {
+      if (event.target.src.toLowerCase().includes('low.webp')) {
+        event.target.src = event.target.src.replace('low.webp', 'high.webp')
+      }
+      else {
+        event.target.src = noImage
+      }
     }
     else {
-      event.target.src = noImage
+      if (event.target.src.toLowerCase().includes('high.webp')) {
+        event.target.src = event.target.src.replace('high.webp', 'low.webp')
+      }
+      else {
+        event.target.src = noImage
+      }
     }
+
+
 
 
   }
 
   const handleChange = (event: any) => {
     setPagePosition(1)
-    setSelectedValue(event.target.value)
+    setSelectedValue(event.target?.value)
+  }
+
+  const addOrRemoveCardToDb = async (card: any) => {
+
+    if (cardsInDb.find((currentCard: any) => currentCard.card_id === card.id)) {
+      await removeCardInDb(card.id)
+    }
+    else {
+      await addCardInDb(card.name, card.id)
+    }
+
+    fetchDBCards()
+
   }
 
 
@@ -168,42 +183,17 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>Cartas Pokemon de Aarón</h1>
-        
-        <div className='App-filters'>
-          <label className='App-label' htmlFor='cbSeries'>Series</label>
-          <select id='cbSeries' title='Filtro series' value={selectedValue} onChange={handleChange}>
-          <option key='Todas' value='' title='Todas'>Todas</option>
-            {series.map((option: ISeries) => (
-              <option key={option.id} value={option.id} title={option.name}>
-                {option.name}
-              </option>
-            ))}
-          </select>
-        </div>
+
+        <CardsFilter changeFilter={handleChange} series={series} setRadioButtonOption={setSelectedRadioButtonValue} />
 
 
         {!currentCard && <input type="text" value={textSearch} className='App-search' placeholder='Buscar' onChange={(event) => setTextSearch(event.target.value)} />}
         <div className='App-Cards-container'>
 
           {!currentCard ?
-            <>
-              {filterCards.map((card: any, index: number) => {
-                return <div className='App-name' key={card.id} onClick={() => viewCard(index)}>
-                  <div className='App-Pokemon-title' >{card.name}</div>
-                  <img className='preview-img' src={`${card.image}/low.webp`} alt={card.name} onError={handlerErrorImagen} />
-                </div>
-
-              })}
-              <div className='App-pagination' onClick={() => { setPagePosition(pagePosition + 1) }}>Ver más</div>
-            </>
+            <CardsList filterCards={filterCards} viewCard={viewCard} handlerErrorImagen={handlerErrorImagen} pagePosition={pagePosition} setPagePosition={setPagePosition} cardsInDb={cardsInDb} setExistInDb={addOrRemoveCardToDb} />
             :
-            <div className='App-card-Image-container'>
-              <h3 className='App-return' onClick={() => setCurrentCard(undefined)}>Volver</h3>
-              <img className='image-card' src={`${currentCard.image}/high.webp`} alt={currentCard.name} onError={handlerErrorImagen} />
-              <div className='App-pagination' onClick={() => { viewCard(currentCard.index - 1) }}>Anterior</div>
-              <div className='App-pagination' onClick={() => { viewCard(currentCard.index + 1) }}>Siguiente</div>
-
-            </div>
+            <CardDetail currentCard={currentCard} setCurrentCard={setCurrentCard} handlerErrorImagen={handlerErrorImagen} viewCard={viewCard} cardsInDb={cardsInDb} setExistInDb={addOrRemoveCardToDb} />
           }
         </div>
 
